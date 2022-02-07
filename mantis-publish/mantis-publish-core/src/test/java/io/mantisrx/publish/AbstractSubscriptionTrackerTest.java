@@ -26,6 +26,7 @@ import com.netflix.archaius.DefaultPropertyFactory;
 import com.netflix.archaius.api.PropertyRepository;
 import com.netflix.archaius.api.config.SettableConfig;
 import com.netflix.archaius.config.DefaultSettableConfig;
+import com.netflix.mantis.discovery.proto.StreamJobClusterMap;
 import com.netflix.spectator.api.DefaultRegistry;
 import com.netflix.spectator.api.Registry;
 import io.mantisrx.publish.api.StreamType;
@@ -83,6 +84,24 @@ public class AbstractSubscriptionTrackerTest {
 
         Set<Subscription> subs = streamManager.getStreamSubscriptions(StreamType.DEFAULT_EVENT_STREAM);
         Set<String> subIds = subs.stream().map(Subscription::getSubscriptionId).collect(Collectors.toSet());
+        Set<String> expected = ImmutableSet.of("id1", "id2");
+        assertEquals(expected, subIds);
+    }
+
+    @Test
+    public void testDefaultStreamKeyAsStreamName() {
+        config.setProperty(String.format(MAX_SUBS_PER_STREAM_FORMAT, StreamType.DEFAULT_EVENT_STREAM), 2);
+
+        streamManager.registerStream(StreamType.DEFAULT_EVENT_STREAM);
+        List<MantisServerSubscription> nextSubs = ImmutableList.of(
+                new MantisServerSubscription("id1", "select * from defaultStream where id = 1", null),
+                new MantisServerSubscription("id2", "select * from defaultStream where id = 2", null),
+                new MantisServerSubscription("id3", "select * from defaultStream where id = 3", null)
+        );
+        subscriptionTracker.setNextSubscriptions(ImmutableMap.of(StreamType.DEFAULT_EVENT_STREAM, nextSubs));
+        subscriptionTracker.refreshSubscriptions();
+
+        Set<String> subIds = subscriptionTracker.getCurrentSubIds(StreamJobClusterMap.DEFAULT_STREAM_KEY);
         Set<String> expected = ImmutableSet.of("id1", "id2");
         assertEquals(expected, subIds);
     }
