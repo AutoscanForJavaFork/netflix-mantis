@@ -53,16 +53,19 @@ public class AbstractSubscriptionTrackerTest {
     private StreamManager streamManager;
     private TestSubscriptionTracker subscriptionTracker;
 
+	private final String SOURCE_JOB_NAME = "RequestEventSubTrackerTestJobCluster";
+
     @BeforeEach
     public void setup() {
         config = new DefaultSettableConfig();
+		config.setProperty(SampleArchaiusMrePublishConfiguration.SUBS_EXPIRY_INTERVAL_SEC_PROP, 0);
         PropertyRepository propertyRepository = DefaultPropertyFactory.from(config);
         SampleArchaiusMrePublishConfiguration archaiusConfiguration = new SampleArchaiusMrePublishConfiguration(propertyRepository);
         Registry registry = new DefaultRegistry();
         MantisJobDiscovery mockJobDiscovery = mock(MantisJobDiscovery.class);
         Map<String, String> streamJobClusterMap = new HashMap<>();
-        streamJobClusterMap.put(StreamType.DEFAULT_EVENT_STREAM, "RequestEventSubTrackerTestJobCluster");
-        streamJobClusterMap.put("requestStream", "RequestEventSubTrackerTestJobCluster");
+        streamJobClusterMap.put(StreamType.DEFAULT_EVENT_STREAM, SOURCE_JOB_NAME);
+        streamJobClusterMap.put("requestStream", SOURCE_JOB_NAME);
         when(mockJobDiscovery.getStreamNameToJobClusterMapping(anyString())).thenReturn(streamJobClusterMap);
 
         streamManager = new StreamManager(registry, archaiusConfiguration);
@@ -79,11 +82,9 @@ public class AbstractSubscriptionTrackerTest {
                 new MantisServerSubscription("id2", "select * from defaultStream where id = 2", null),
                 new MantisServerSubscription("id3", "select * from defaultStream where id = 3", null)
         );
-        subscriptionTracker.setNextSubscriptions(ImmutableMap.of(StreamType.DEFAULT_EVENT_STREAM, nextSubs));
-        subscriptionTracker.refreshSubscriptions();
+        subscriptionTracker.setSubscriptions(ImmutableMap.of(SOURCE_JOB_NAME, nextSubs));
 
-        Set<Subscription> subs = streamManager.getStreamSubscriptions(StreamType.DEFAULT_EVENT_STREAM);
-        Set<String> subIds = subs.stream().map(Subscription::getSubscriptionId).collect(Collectors.toSet());
+        Set<String> subIds = subscriptionTracker.getCurrentSubscriptions().stream().map(x -> x.getSubscriptionId()).collect(Collectors.toSet());
         Set<String> expected = ImmutableSet.of("id1", "id2");
         assertEquals(expected, subIds);
     }
@@ -95,13 +96,11 @@ public class AbstractSubscriptionTrackerTest {
         streamManager.registerStream(StreamType.DEFAULT_EVENT_STREAM);
         List<MantisServerSubscription> nextSubs = ImmutableList.of(
                 new MantisServerSubscription("id1", "select * from defaultStream where id = 1", null),
-                new MantisServerSubscription("id2", "select * from defaultStream where id = 2", null),
-                new MantisServerSubscription("id3", "select * from defaultStream where id = 3", null)
+                new MantisServerSubscription("id2", "select * from defaultStream where id = 2", null)
         );
-        subscriptionTracker.setNextSubscriptions(ImmutableMap.of(StreamType.DEFAULT_EVENT_STREAM, nextSubs));
-        subscriptionTracker.refreshSubscriptions();
+        subscriptionTracker.setSubscriptions(ImmutableMap.of(SOURCE_JOB_NAME, nextSubs));
 
-        Set<String> subIds = subscriptionTracker.getCurrentSubIds(StreamJobClusterMap.DEFAULT_STREAM_KEY);
+        Set<String> subIds = subscriptionTracker.getCurrentSubscriptions().stream().map(x -> x.getSubscriptionId()).collect(Collectors.toSet());
         Set<String> expected = ImmutableSet.of("id1", "id2");
         assertEquals(expected, subIds);
     }
@@ -117,11 +116,9 @@ public class AbstractSubscriptionTrackerTest {
                 new MantisServerSubscription("id2", "select * from defaultStream where id = 2", null),
                 new MantisServerSubscription("id3", "select * from defaultStream where id = 3", null)
         );
-        subscriptionTracker.setNextSubscriptions(ImmutableMap.of(StreamType.DEFAULT_EVENT_STREAM, nextSubs));
-        subscriptionTracker.refreshSubscriptions();
+        subscriptionTracker.setSubscriptions(ImmutableMap.of(SOURCE_JOB_NAME, nextSubs));
 
-        Set<Subscription> subs = streamManager.getStreamSubscriptions(StreamType.DEFAULT_EVENT_STREAM);
-        Set<String> subIds = subs.stream().map(Subscription::getSubscriptionId).collect(Collectors.toSet());
+        Set<String> subIds = subscriptionTracker.getCurrentSubscriptions().stream().map(x -> x.getSubscriptionId()).collect(Collectors.toSet());
         Set<String> expected = ImmutableSet.of("id1", "id2");
         assertEquals(expected, subIds);
 
@@ -134,11 +131,9 @@ public class AbstractSubscriptionTrackerTest {
                 new MantisServerSubscription("id4", "select * from defaultStream where id = 4", null),
                 new MantisServerSubscription("id5", "select * from defaultStream where id = 5", null)
         );
-        subscriptionTracker.setNextSubscriptions(ImmutableMap.of(StreamType.DEFAULT_EVENT_STREAM, nextSubs));
-        subscriptionTracker.refreshSubscriptions();
+        subscriptionTracker.setSubscriptions(ImmutableMap.of(SOURCE_JOB_NAME, nextSubs));
 
-        subs = streamManager.getStreamSubscriptions(StreamType.DEFAULT_EVENT_STREAM);
-        subIds = subs.stream().map(Subscription::getSubscriptionId).collect(Collectors.toSet());
+        subIds = subscriptionTracker.getCurrentSubscriptions().stream().map(x -> x.getSubscriptionId()).collect(Collectors.toSet());
         expected = ImmutableSet.of("id1", "id2", "id3", "id4");
         assertEquals(expected, subIds);
     }
@@ -151,11 +146,9 @@ public class AbstractSubscriptionTrackerTest {
                 new MantisServerSubscription("id2", "select * from defaultStream where id = 2", null),
                 new MantisServerSubscription("id3", "select * from defaultStream where id = 3", null)
         );
-        subscriptionTracker.setNextSubscriptions(ImmutableMap.of(StreamType.DEFAULT_EVENT_STREAM, nextSubs));
-        subscriptionTracker.refreshSubscriptions();
+        subscriptionTracker.setSubscriptions(ImmutableMap.of(SOURCE_JOB_NAME, nextSubs));
 
-        Set<Subscription> subs = streamManager.getStreamSubscriptions(StreamType.DEFAULT_EVENT_STREAM);
-        Set<String> subIds = subs.stream().map(Subscription::getSubscriptionId).collect(Collectors.toSet());
+        Set<String> subIds = subscriptionTracker.getCurrentSubscriptions().stream().map(x -> x.getSubscriptionId()).collect(Collectors.toSet());
         Set<String> expected = ImmutableSet.of("id1", "id2", "id3");
         assertEquals(expected, subIds);
 
@@ -165,11 +158,9 @@ public class AbstractSubscriptionTrackerTest {
                 new MantisServerSubscription("id3", "select * from defaultStream where id = 3", null),
                 new MantisServerSubscription("id4", "select * from defaultStream where id = 4", null)
         );
-        subscriptionTracker.setNextSubscriptions(ImmutableMap.of(StreamType.DEFAULT_EVENT_STREAM, nextSubs));
-        subscriptionTracker.refreshSubscriptions();
+        subscriptionTracker.setSubscriptions(ImmutableMap.of(SOURCE_JOB_NAME, nextSubs));
 
-        subs = streamManager.getStreamSubscriptions(StreamType.DEFAULT_EVENT_STREAM);
-        subIds = subs.stream().map(Subscription::getSubscriptionId).collect(Collectors.toSet());
+        subIds = subscriptionTracker.getCurrentSubscriptions().stream().map(x -> x.getSubscriptionId()).collect(Collectors.toSet());
         expected = ImmutableSet.of("id1", "id2", "id3", "id4");
         assertEquals(expected, subIds);
 
@@ -177,11 +168,9 @@ public class AbstractSubscriptionTrackerTest {
                 new MantisServerSubscription("id2", "select * from defaultStream where id = 2", null),
                 new MantisServerSubscription("id4", "select * from defaultStream where id = 4", null)
         );
-        subscriptionTracker.setNextSubscriptions(ImmutableMap.of(StreamType.DEFAULT_EVENT_STREAM, nextSubs));
-        subscriptionTracker.refreshSubscriptions();
+        subscriptionTracker.setSubscriptions(ImmutableMap.of(SOURCE_JOB_NAME, nextSubs));
 
-        subs = streamManager.getStreamSubscriptions(StreamType.DEFAULT_EVENT_STREAM);
-        subIds = subs.stream().map(Subscription::getSubscriptionId).collect(Collectors.toSet());
+        subIds = subscriptionTracker.getCurrentSubscriptions().stream().map(x -> x.getSubscriptionId()).collect(Collectors.toSet());
         expected = ImmutableSet.of("id2", "id4");
         assertEquals(expected, subIds);
     }
@@ -195,40 +184,33 @@ public class AbstractSubscriptionTrackerTest {
         List<MantisServerSubscription> nextSubs = ImmutableList.of(
                 new MantisServerSubscription("default_id1", "select * from defaultStream where id = 1", null),
                 new MantisServerSubscription("default_id2", "select * from defaultStream where id = 2", null),
-                new MantisServerSubscription("default_id3", "select * from defaultStream, requestStream where id = 3", null)
-        );
-
-        List<MantisServerSubscription> nextRequestSubs = ImmutableList.of(
+                new MantisServerSubscription("default_id3", "select * from defaultStream, requestStream where id = 3", null),
                 new MantisServerSubscription("request_id1", "select * from requestStream where id = 1", null),
                 new MantisServerSubscription("request_id2", "select * from requestStream where id = 2", null),
                 new MantisServerSubscription("default_id3", "select * from defaultStream, requestStream where id = 3", null)
         );
-        subscriptionTracker.setNextSubscriptions(ImmutableMap.of(StreamType.DEFAULT_EVENT_STREAM, nextSubs,
-                requestStream, nextRequestSubs));
-        subscriptionTracker.refreshSubscriptions();
 
-        Set<Subscription> subs = streamManager.getStreamSubscriptions(StreamType.DEFAULT_EVENT_STREAM);
-        Set<String> subIds = subs.stream().map(Subscription::getSubscriptionId).collect(Collectors.toSet());
+        List<MantisServerSubscription> nextRequestSubs = ImmutableList.of();
+
+        subscriptionTracker.setSubscriptions(ImmutableMap.of(SOURCE_JOB_NAME, nextSubs));
+
+        Set<String> subIds = streamManager.getStreamSubscriptions(StreamType.DEFAULT_EVENT_STREAM).stream().map(Subscription::getSubscriptionId).collect(Collectors.toSet());
         Set<String> expected = ImmutableSet.of("default_id1", "default_id2", "default_id3");
         assertEquals(expected, subIds);
 
-        subs = streamManager.getStreamSubscriptions(requestStream);
+        Set<Subscription> subs = streamManager.getStreamSubscriptions(requestStream);
         subIds = subs.stream().map(Subscription::getSubscriptionId).collect(Collectors.toSet());
         expected = ImmutableSet.of("request_id1", "request_id2", "default_id3");
         assertEquals(expected, subIds);
 
-        nextSubs = ImmutableList.of(
-                new MantisServerSubscription("default_id1", "select * from defaultStream where id = 1", null)
-        );
 
-        nextRequestSubs = ImmutableList.of(
+        nextSubs = ImmutableList.of(
+                new MantisServerSubscription("default_id1", "select * from defaultStream where id = 1", null),
                 new MantisServerSubscription("request_id1", "select * from requestStream where id = 1", null),
                 new MantisServerSubscription("request_id2", "select * from requestStream where id = 2", null),
                 new MantisServerSubscription("request_id4", "select * from requestStream where id = 4", null)
         );
-        subscriptionTracker.setNextSubscriptions(ImmutableMap.of(StreamType.DEFAULT_EVENT_STREAM, nextSubs,
-                requestStream, nextRequestSubs));
-        subscriptionTracker.refreshSubscriptions();
+        subscriptionTracker.setSubscriptions(ImmutableMap.of(SOURCE_JOB_NAME, nextSubs));
 
         subs = streamManager.getStreamSubscriptions(StreamType.DEFAULT_EVENT_STREAM);
         subIds = subs.stream().map(Subscription::getSubscriptionId).collect(Collectors.toSet());
@@ -240,20 +222,16 @@ public class AbstractSubscriptionTrackerTest {
         expected = ImmutableSet.of("request_id1", "request_id2", "request_id4");
         assertEquals(expected, subIds);
 
+
         nextSubs = ImmutableList.of(
                 new MantisServerSubscription("default_id1", "select * from defaultStream where id = 1", null),
-                new MantisServerSubscription("default_id3", "select * from defaultStream, requestStream where id = 3", null)
-        );
-
-        nextRequestSubs = ImmutableList.of(
+                new MantisServerSubscription("default_id3", "select * from defaultStream, requestStream where id = 3", null),
                 new MantisServerSubscription("request_id1", "select * from requestStream where id = 1", null),
                 new MantisServerSubscription("request_id2", "select * from requestStream where id = 2", null),
                 new MantisServerSubscription("request_id4", "select * from requestStream where id = 4", null),
                 new MantisServerSubscription("default_id3", "select * from defaultStream, requestStream where id = 3", null)
         );
-        subscriptionTracker.setNextSubscriptions(ImmutableMap.of(StreamType.DEFAULT_EVENT_STREAM, nextSubs,
-                requestStream, nextRequestSubs));
-        subscriptionTracker.refreshSubscriptions();
+        subscriptionTracker.setSubscriptions(ImmutableMap.of(SOURCE_JOB_NAME, nextSubs));
 
         subs = streamManager.getStreamSubscriptions(StreamType.DEFAULT_EVENT_STREAM);
         subIds = subs.stream().map(Subscription::getSubscriptionId).collect(Collectors.toSet());
@@ -280,9 +258,7 @@ public class AbstractSubscriptionTrackerTest {
                 new MantisServerSubscription("default_id3", "select * from defaultStream, requestStream where id = 3", null)
         );
 
-        subscriptionTracker.setNextSubscriptions(ImmutableMap.of(StreamType.DEFAULT_EVENT_STREAM, nextSubs,
-                requestStream, nextSubs));
-        subscriptionTracker.refreshSubscriptions();
+        subscriptionTracker.setSubscriptions(ImmutableMap.of(SOURCE_JOB_NAME, nextSubs));
 
         Set<Subscription> subs = streamManager.getStreamSubscriptions(StreamType.DEFAULT_EVENT_STREAM);
         Set<String> subIds = subs.stream().map(Subscription::getSubscriptionId).collect(Collectors.toSet());
@@ -300,9 +276,7 @@ public class AbstractSubscriptionTrackerTest {
                 new MantisServerSubscription("request_id2", "select * from requestStream where id = 2", null),
                 new MantisServerSubscription("request_id4", "select * from requestStream where id = 4", null)
         );
-        subscriptionTracker.setNextSubscriptions(ImmutableMap.of(StreamType.DEFAULT_EVENT_STREAM, nextSubs,
-                requestStream, nextSubs));
-        subscriptionTracker.refreshSubscriptions();
+        subscriptionTracker.setSubscriptions(ImmutableMap.of(SOURCE_JOB_NAME, nextSubs));
 
         subs = streamManager.getStreamSubscriptions(StreamType.DEFAULT_EVENT_STREAM);
         subIds = subs.stream().map(Subscription::getSubscriptionId).collect(Collectors.toSet());
@@ -321,9 +295,7 @@ public class AbstractSubscriptionTrackerTest {
                 new MantisServerSubscription("request_id4", "select * from requestStream where id = 4", null),
                 new MantisServerSubscription("default_id3", "select * from defaultStream, requestStream where id = 3", null)
         );
-        subscriptionTracker.setNextSubscriptions(ImmutableMap.of(StreamType.DEFAULT_EVENT_STREAM, nextSubs,
-                requestStream, nextSubs));
-        subscriptionTracker.refreshSubscriptions();
+        subscriptionTracker.setSubscriptions(ImmutableMap.of(SOURCE_JOB_NAME, nextSubs));
 
         subs = streamManager.getStreamSubscriptions(StreamType.DEFAULT_EVENT_STREAM);
         subIds = subs.stream().map(Subscription::getSubscriptionId).collect(Collectors.toSet());
@@ -344,21 +316,25 @@ public class AbstractSubscriptionTrackerTest {
                 Registry registry,
                 MantisJobDiscovery jobDiscovery,
                 StreamManager streamManager) {
-
             super(mrePublishConfiguration, registry, jobDiscovery, streamManager);
         }
 
-        public void setNextSubscriptions(Map<String, List<MantisServerSubscription>> subscriptions) {
-            this.nextSubscriptions = subscriptions;
-        }
+		/**
+		 * Set next subscriptions for a job cluster
+		 * @param subscriptions A {@link Map} of jobCluster to subscription.
+		 * */
+		public void setSubscriptions(Map<String, List<MantisServerSubscription>> subscriptions) {
+			this.nextSubscriptions = subscriptions;
+			this.refreshSubscriptions();
+		}
 
-        @Override
-        public Optional<MantisServerSubscriptionEnvelope> fetchSubscriptions(String streamName, String jobCluster) {
-            if (nextSubscriptions != null && !nextSubscriptions.isEmpty()) {
-                return Optional.of(new MantisServerSubscriptionEnvelope(nextSubscriptions.get(streamName)));
-            } else {
-                return Optional.empty();
-            }
-        }
-    }
+		@Override
+		public Optional<MantisServerSubscriptionEnvelope> fetchSubscriptions(String jobCluster) {
+			if (nextSubscriptions != null && !nextSubscriptions.isEmpty()) {
+				return Optional.of(new MantisServerSubscriptionEnvelope(nextSubscriptions.get(jobCluster)));
+			} else {
+				return Optional.empty();
+			}
+		}
+	}
 }

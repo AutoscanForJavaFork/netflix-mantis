@@ -67,7 +67,7 @@ import org.mockito.ArgumentCaptor;
 
 public class DefaultSubscriptionTrackerTest {
 
-    private static final int subscriptionExpiryIntervalSec = 1;
+    private static final int subscriptionExpiryIntervalSec = 3;
     private final Map<String, String> streamJobClusterMap = new HashMap<>();
     @Rule
     public WireMockRule mantisWorker1 = new WireMockRule(options().dynamicPort());
@@ -306,6 +306,7 @@ public class DefaultSubscriptionTrackerTest {
         // simulate the job discovery fetch failure
         when(mockJobDiscovery.getCurrentJobWorkers(jobCluster)).thenReturn(Optional.empty());
 
+		System.out.println("CODY refreshing");
         subscriptionTracker.refreshSubscriptions();
 
         Set<String> currentSubIds2 = subscriptionTracker.getCurrentSubIds(streamName);
