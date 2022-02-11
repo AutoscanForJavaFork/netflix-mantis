@@ -27,13 +27,11 @@ import io.mantisrx.publish.internal.discovery.MantisJobDiscovery;
 import io.mantisrx.publish.internal.metrics.SpectatorUtils;
 import io.mantisrx.publish.proto.MantisServerSubscription;
 import io.mantisrx.publish.proto.MantisServerSubscriptionEnvelope;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,11 +120,7 @@ public abstract class AbstractSubscriptionTracker implements SubscriptionTracker
 					.contains(o.getSubscriptionId()))
 			.filter(c ->  {
 				Long lastSeen = subscriptionLastFetchedTimestamp.get(c.getSubscriptionId());
-				System.out.println("CODY last seen: " + lastSeen);
 				Long age = currentTimestamp - lastSeen;
-				System.out.println("CODY age: " + age);
-				//- subscriptionLastFetchedTimestamp.getOrDefault(c.getSubscriptionId(), currentTimestamp);
-
 				 return age > mrePublishConfiguration.subscriptionExpiryIntervalSec() * 1000;
 				 })
 			.forEach(o -> {

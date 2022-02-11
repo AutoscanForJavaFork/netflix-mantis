@@ -26,7 +26,6 @@ import com.netflix.archaius.DefaultPropertyFactory;
 import com.netflix.archaius.api.PropertyRepository;
 import com.netflix.archaius.api.config.SettableConfig;
 import com.netflix.archaius.config.DefaultSettableConfig;
-import com.netflix.mantis.discovery.proto.StreamJobClusterMap;
 import com.netflix.spectator.api.DefaultRegistry;
 import com.netflix.spectator.api.Registry;
 import io.mantisrx.publish.api.StreamType;
