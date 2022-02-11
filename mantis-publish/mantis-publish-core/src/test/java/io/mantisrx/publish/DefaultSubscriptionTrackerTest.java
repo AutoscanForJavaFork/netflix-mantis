@@ -38,6 +38,7 @@ import com.netflix.archaius.config.DefaultSettableConfig;
 import com.netflix.mantis.discovery.proto.JobDiscoveryInfo;
 import com.netflix.mantis.discovery.proto.MantisWorker;
 import com.netflix.mantis.discovery.proto.StageWorkers;
+import com.netflix.mantis.discovery.proto.StreamJobClusterMap;
 import com.netflix.spectator.api.DefaultRegistry;
 import com.netflix.spectator.api.Registry;
 import com.netflix.spectator.ipc.http.HttpClient;
@@ -98,6 +99,16 @@ public class DefaultSubscriptionTrackerTest {
 
         PropertyRepository propertyRepository = DefaultPropertyFactory.from(settableConfig);
         return new SampleArchaiusMrePublishConfiguration(propertyRepository);
+    }
+
+	protected Set<String> getCurrentSubIds(String streamName) {
+
+		String lookupKey = StreamJobClusterMap.DEFAULT_STREAM_KEY.equals(streamName)
+			? StreamType.DEFAULT_EVENT_STREAM
+			: streamName;
+
+        return this.mockStreamManager.getStreamSubscriptions(lookupKey).stream().map(Subscription::getSubscriptionId)
+                .collect(Collectors.toSet());
     }
 
     @BeforeEach
@@ -166,7 +177,7 @@ public class DefaultSubscriptionTrackerTest {
         }
         subscriptionTracker.refreshSubscriptions();
 
-        Set<String> currentSubIds = subscriptionTracker.getCurrentSubIds(streamName);
+        Set<String> currentSubIds = getCurrentSubIds(streamName);
         // subs resolved to majority among workers
         assertEquals(majoritySubs.getSubscriptions().stream().map(MantisServerSubscription::getSubscriptionId).collect(Collectors.toSet()), currentSubIds);
         assertNotEquals(w1Subs.getSubscriptions().stream().map(MantisServerSubscription::getSubscriptionId).collect(Collectors.toSet()), currentSubIds);
@@ -213,7 +224,7 @@ public class DefaultSubscriptionTrackerTest {
         }
         subscriptionTracker.refreshSubscriptions();
 
-        Set<String> currentSubIds = subscriptionTracker.getCurrentSubIds(streamName);
+        Set<String> currentSubIds = getCurrentSubIds(streamName);
         // subs resolved to majority among workers
         assertEquals(majoritySubs.getSubscriptions().stream().map(MantisServerSubscription::getSubscriptionId).collect(Collectors.toSet()), currentSubIds);
 
@@ -236,7 +247,7 @@ public class DefaultSubscriptionTrackerTest {
 
         subscriptionTracker.refreshSubscriptions();
 
-        Set<String> currentSubIds2 = subscriptionTracker.getCurrentSubIds(streamName);
+        Set<String> currentSubIds2 = getCurrentSubIds(streamName);
         // subs resolved to majority among workers
         assertEquals(majoritySubs.getSubscriptions().stream().map(MantisServerSubscription::getSubscriptionId).collect(Collectors.toSet()), currentSubIds2);
 
@@ -244,7 +255,7 @@ public class DefaultSubscriptionTrackerTest {
 
         subscriptionTracker.refreshSubscriptions();
 
-        assertTrue(subscriptionTracker.getCurrentSubIds(streamName).isEmpty());
+        assertTrue(getCurrentSubIds(streamName).isEmpty());
 
         // verify all previously added subscriptions cleaned up and propagated as REMOVE to StreamManager
         ArgumentCaptor<String> captor2 = ArgumentCaptor.forClass(String.class);
@@ -287,7 +298,7 @@ public class DefaultSubscriptionTrackerTest {
 
         subscriptionTracker.refreshSubscriptions();
 
-        Set<String> currentSubIds = subscriptionTracker.getCurrentSubIds(streamName);
+        Set<String> currentSubIds = getCurrentSubIds(streamName);
         // subs resolved to majority among workers
         assertEquals(majoritySubs.getSubscriptions().stream().map(MantisServerSubscription::getSubscriptionId).collect(Collectors.toSet()), currentSubIds);
 
@@ -309,7 +320,7 @@ public class DefaultSubscriptionTrackerTest {
 		System.out.println("CODY refreshing");
         subscriptionTracker.refreshSubscriptions();
 
-        Set<String> currentSubIds2 = subscriptionTracker.getCurrentSubIds(streamName);
+        Set<String> currentSubIds2 = getCurrentSubIds(streamName);
         // subs resolved to majority among workers
         assertEquals(majoritySubs.getSubscriptions().stream().map(MantisServerSubscription::getSubscriptionId).collect(Collectors.toSet()), currentSubIds2);
 
@@ -317,7 +328,7 @@ public class DefaultSubscriptionTrackerTest {
         Thread.sleep(subscriptionExpiryIntervalSec * 1000 + 100);
         subscriptionTracker.refreshSubscriptions();
 
-        assertTrue(subscriptionTracker.getCurrentSubIds(streamName).isEmpty());
+        assertTrue(getCurrentSubIds(streamName).isEmpty());
 
         // verify all previously added subscriptions cleaned up and propagated as REMOVE to StreamManager
         ArgumentCaptor<String> captor2 = ArgumentCaptor.forClass(String.class);
@@ -360,7 +371,7 @@ public class DefaultSubscriptionTrackerTest {
 
         subscriptionTracker.refreshSubscriptions();
 
-        assertTrue(subscriptionTracker.getCurrentSubIds(streamName).isEmpty());
+        assertTrue(getCurrentSubIds(streamName).isEmpty());
         verify(mockStreamManager, times(1)).getRegisteredStreams();
         verifyZeroInteractions(mockJobDiscovery);
     }

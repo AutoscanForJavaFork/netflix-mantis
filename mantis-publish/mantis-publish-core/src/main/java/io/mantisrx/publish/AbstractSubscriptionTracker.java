@@ -19,7 +19,6 @@ package io.mantisrx.publish;
 import com.netflix.mantis.discovery.proto.StreamJobClusterMap;
 import com.netflix.spectator.api.Counter;
 import com.netflix.spectator.api.Registry;
-import io.mantisrx.publish.api.StreamType;
 import io.mantisrx.publish.config.MrePublishConfiguration;
 import io.mantisrx.publish.core.Subscription;
 import io.mantisrx.publish.core.SubscriptionFactory;
@@ -213,15 +212,4 @@ public abstract class AbstractSubscriptionTracker implements SubscriptionTracker
 			.flatMap(streamName -> streamManager.getStreamSubscriptions(streamName).stream())
 			.collect(Collectors.toSet());
 	}
-
-	// TODO: This is only present for unit tests, should be removed.
-	protected Set<String> getCurrentSubIds(String streamName) {
-
-		String lookupKey = StreamJobClusterMap.DEFAULT_STREAM_KEY.equals(streamName)
-			? StreamType.DEFAULT_EVENT_STREAM
-			: streamName;
-
-        return streamManager.getStreamSubscriptions(lookupKey).stream().map(Subscription::getSubscriptionId)
-                .collect(Collectors.toSet());
-    }
 }
